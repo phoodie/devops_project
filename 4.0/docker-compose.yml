@@ -1,0 +1,33 @@
+version: "3.7"
+services:
+  terraform:
+    build:
+      context: .
+      dockerfile: terraform.Dockerfile
+    environment: #adding variables for AWS
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCCESS_KEY:
+      AWS_REGION: ap-southeast-2
+    volumes:
+      - "$PWD:/app" #had to mount this dir to fetch out main.tf
+    working_dir: /app # making this as our WORKDIR
+  selenium:
+    image: selenium/standalone-chrome-debug # using dockerhub image
+    ports:
+      - 4444:4444 #outside container: inside the contaier
+      - 5901:5900 #vnc server
+  website:
+    build:
+      context: .
+    ports:
+      - 80:80
+# adding new service called unit test
+  unit-tests:
+    volumes:
+      - "$PWD:/app" # mounting the current path to the /app container
+    build:
+      context: .
+      dockerfile: rspec.dockerfile # telling a specific dockerfuile to use to build
+    command: # since rspec.dockerfile has ENTRYPOINT we can add arguments
+      - --pattern # specify pattern so it can use regex
+      - /app/spec/unit/*_spec.rb # fixed a typo here to /app/spec.. instead of /spec/unit..
